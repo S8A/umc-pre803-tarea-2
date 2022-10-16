@@ -70,16 +70,21 @@ def reenumerar_etiqueta_vocal(
     # Índice del número de etiqueta de vocal que corresponde a la etiqueta dada
     etiqueta_vocal = tf.math.argmax(
         tf.math.equal(etiqueta, tf.constant(ETIQUETAS_VOCALES, dtype=np.int64)),
-        output_type=np.int32
+        output_type=np.int64
     )
-    # Asociar a cada índice 0-6 (A, E, I, O, U, a, e) una función que retorne 
-    # su etiqueta deseada 0-4 (A, E, I, O, U)
-    branch_fns = (
-        [lambda: tf.constant(i, dtype=np.int64) for i in range(0, 5)]
-        + [lambda: tf.constant(i, dtype=np.int64) for i in range(0, 2)]
+    # Asociar a cada índice 0-6 (A, E, I, O, U, a, e) su etiqueta 
+    # correspondiente 0-4 (A, E, I, O, U)
+    cinco = tf.constant(5, dtype=np.int64)
+    nueva_etiqueta = tf.cond(
+        # Condición: número de etiqueta < 5 ?
+        etiqueta_vocal < cinco,
+        # Si es verdadero, retornar número de etiqueta tal cual
+        true_fn=lambda: etiqueta_vocal,
+        # De lo contrario, restarle 5 al número de etiqueta
+        false_fn=lambda: tf.subtract(etiqueta_vocal, cinco),
     )
     # Retorna el número de etiqueta deseado según el índice de la etiqueta vocal
-    return imagen, tf.switch_case(etiqueta_vocal, branch_fns=branch_fns)
+    return imagen, nueva_etiqueta
 
 
 def preparar_datos() -> Tuple[tf.data.Dataset, tf.data.Dataset]:
