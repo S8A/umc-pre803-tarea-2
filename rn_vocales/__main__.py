@@ -19,7 +19,7 @@ ARCHIVO_MODEL_JSON = os.path.join(DIRECTORIO_TF, "model.json")
 class Handler(http.server.SimpleHTTPRequestHandler):
     """Despachador de peticiones HTTP."""
 
-    def __init__(self, request, client_address, server, directory) -> None:
+    def __init__(self, request, client_address, server, directory = None) -> None:
         super().__init__(request, client_address, server, directory=DIRECTORIO_WEB)
 
 
