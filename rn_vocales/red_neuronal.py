@@ -20,15 +20,12 @@ import tensorflow_datasets as tfds
 import tensorflowjs as tfjs
 
 
-# Por alguna razón el conjunto de datos emnist/letters de TensorFlow NO ES
-# el mismo EMNIST Letters que se describe en el paper (26 clases balanceadas 
-# correspondientes a las letras sin importar mayúsculas o minúsculas).
-# En cambio, se trata del subconjunto de las 37 clases de letras del conjunto 
-# EMNIST Balanced (26 letras mayúsculas + 11 minúsculas que difieren).
-# Por lo tanto, tendremos que unir manualmente las etiquetas de las A y las E 
-# que están cada una separadas en mayúscula y minúscula.
+# El conjunto de datos EMNIST Balanced tiene 47 clases: 10 dígitos, 26 letras 
+# mayúsculas (A-Z sin la Ñ), y 11 minúsculas que difieren de su forma mayúscula.
+# Por lo tanto, tendremos que unir manualmente las etiquetas de la a y la e 
+# a sus respectivas mayúsculas.
 # https://arxiv.org/pdf/1702.05373v1.pdf
-ETIQUETAS_MNIST = list("ABCDEFGHIJKLMNOPQRSTUVWXYZabdefghnqrt")
+ETIQUETAS_MNIST = list("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabdefghnqrt")
 
 VOCALES = list("AEIOU")
 ETIQUETAS_VOCALES = [
@@ -97,7 +94,7 @@ def preparar_datos() -> Tuple[tf.data.Dataset, tf.data.Dataset]:
     # Cargar conjunto de datos EMNIST Letters usando la librería TensorFlow 
     # Datasets y separarlos en datos de entrenamiento y datos de prueba.
     dataset, metadata = tfds.load(
-        'emnist/letters',
+        'emnist/balanced',
         shuffle_files=True,
         as_supervised=True,
         with_info=True
