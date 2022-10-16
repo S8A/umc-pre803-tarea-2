@@ -36,10 +36,20 @@ ETIQUETAS_VOCALES = [
 TAMANO_LOTE = 128
 
 
-def normalizar_imagen(
+def transponer_imagen(
     imagen: tf.Tensor, etiqueta: tf.Tensor
 ) -> Tuple[tf.Tensor, tf.Tensor]:
-  """Normaliza las imágenes convirtiendo enteros (0-255) a decimales (0-1)"""
+    """
+    Transpone los píxeles de las imágenes. Es necesario para que las imágenes 
+    de EMNIST estén en la orientación correcta.
+    """
+    return tf.image.transpose(imagen), etiqueta
+
+
+def normalizar_pixeles(
+    imagen: tf.Tensor, etiqueta: tf.Tensor
+) -> Tuple[tf.Tensor, tf.Tensor]:
+  """Normaliza los píxeles convirtiendo enteros (0-255) a decimales (0-1)"""
   return tf.cast(imagen, tf.float32) / 255., etiqueta
 
 
@@ -93,9 +103,13 @@ def preparar_datos() -> Tuple[tf.data.Dataset, tf.data.Dataset]:
     datos_entrenamiento = datos_entrenamiento.filter(es_vocal)
     # Convertir números de etiquetas de vocales al rango [0, 5)
     datos_entrenamiento = datos_entrenamiento.map(reenumerar_etiqueta_vocal)
+    # Transponer imágenes para que tengan la orientación correcta
+    datos_entrenamiento = datos_entrenamiento.map(
+        transponer_imagen, num_parallel_calls=tf.data.AUTOTUNE
+    )
     # Normalizar los datos de entrenamiento (convertir valores 0-255 a 0-1)
     datos_entrenamiento = datos_entrenamiento.map(
-        normalizar_imagen, num_parallel_calls=tf.data.AUTOTUNE
+        normalizar_pixeles, num_parallel_calls=tf.data.AUTOTUNE
     )
     # Guardar datos de entrenamiento en caché para mejorar el rendimiento
     datos_entrenamiento = datos_entrenamiento.cache()
@@ -109,14 +123,17 @@ def preparar_datos() -> Tuple[tf.data.Dataset, tf.data.Dataset]:
     # elementos pueda mientras se procesa el elemento actual
     datos_entrenamiento = datos_entrenamiento.prefetch(tf.data.AUTOTUNE)
 
-
     # Excluir las letras consonantes de los datos de prueba
     datos_prueba = datos_prueba.filter(es_vocal)
     # Convertir números de etiquetas de vocales al rango [0, 5)
     datos_prueba = datos_prueba.map(reenumerar_etiqueta_vocal)
+    # Transponer imágenes para que tengan la orientación correcta
+    datos_prueba = datos_prueba.map(
+        transponer_imagen, num_parallel_calls=tf.data.AUTOTUNE
+    )
     # Normalizar los datos de prueba (convertir valores 0-255 a 0-1)
     datos_prueba = datos_prueba.map(
-        normalizar_imagen, num_parallel_calls=tf.data.AUTOTUNE
+        normalizar_pixeles, num_parallel_calls=tf.data.AUTOTUNE
     )
     # Guardar datos de prueba en caché para mejorar el rendimiento
     datos_prueba = datos_prueba.cache()
