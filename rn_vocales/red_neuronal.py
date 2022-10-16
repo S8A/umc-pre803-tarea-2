@@ -1,9 +1,9 @@
 """Red neuronal de reconocimiento de vocales manuscritas.
 
-Aquí se encuentran las funciones para construir y entrenar la red neuronal. 
-Para correrlo se requiere un buen hardware (especialmente GPU) además de 
+Aquí se encuentran las funciones para construir y entrenar la red neuronal.
+Para correrlo se requiere un buen hardware (especialmente GPU) además de
 instalar unas librerías de NVIDIA algo engorrosas de instalar. Por lo tanto,
-es mejor correr este código en Google Colab y descargar los archivos exportados 
+es mejor correr este código en Google Colab y descargar los archivos exportados
 de ahí.
 
 Libreta en Google Colab:
@@ -20,9 +20,9 @@ import tensorflow_datasets as tfds
 import tensorflowjs as tfjs
 
 
-# El conjunto de datos EMNIST Balanced tiene 47 clases: 10 dígitos, 26 letras 
+# El conjunto de datos EMNIST Balanced tiene 47 clases: 10 dígitos, 26 letras
 # mayúsculas (A-Z sin la Ñ), y 11 minúsculas que difieren de su forma mayúscula.
-# Por lo tanto, tendremos que unir manualmente las etiquetas de la a y la e 
+# Por lo tanto, tendremos que unir manualmente las etiquetas de la a y la e
 # a sus respectivas mayúsculas.
 # https://arxiv.org/pdf/1702.05373v1.pdf
 ETIQUETAS_MNIST = list("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabdefghnqrt")
@@ -38,7 +38,7 @@ def transponer_imagen(
     imagen: tf.Tensor, etiqueta: tf.Tensor
 ) -> Tuple[tf.Tensor, tf.Tensor]:
     """
-    Transpone los píxeles de las imágenes. Es necesario para que las imágenes 
+    Transpone los píxeles de las imágenes. Es necesario para que las imágenes
     de EMNIST estén en la orientación correcta.
     """
     return tf.image.transpose(imagen), etiqueta
@@ -53,7 +53,7 @@ def normalizar_pixeles(
 
 def es_vocal(imagen: tf.Tensor, etiqueta: tf.Tensor) -> bool:
     """Indica si la etiqueta corresponde a una vocal."""
-    # Retorna verdadero si el número de etiqueta es igual a alguno de los 
+    # Retorna verdadero si el número de etiqueta es igual a alguno de los
     # números de etiqueta correspondientes a vocales mayúsculas o minúsculas
     return tf.math.reduce_any(
         tf.math.equal(etiqueta, tf.constant(ETIQUETAS_VOCALES, dtype=np.int64))
@@ -69,7 +69,7 @@ def reenumerar_etiqueta_vocal(
         tf.math.equal(etiqueta, tf.constant(ETIQUETAS_VOCALES, dtype=np.int64)),
         output_type=np.int64
     )
-    # Asociar a cada índice 0-6 (A, E, I, O, U, a, e) su etiqueta 
+    # Asociar a cada índice 0-6 (A, E, I, O, U, a, e) su etiqueta
     # correspondiente 0-4 (A, E, I, O, U)
     cinco = tf.constant(5, dtype=np.int64)
     nueva_etiqueta = tf.cond(
@@ -86,12 +86,12 @@ def reenumerar_etiqueta_vocal(
 
 def preparar_datos() -> Tuple[tf.data.Dataset, tf.data.Dataset]:
     """Prepara los datos de entrenamiento y de prueba.
-    
+
     Retorna:
         Los datos de entrenamiento, los datos de prueba, y la lista de nombres
         de etiquetas (vocales).
     """
-    # Cargar conjunto de datos EMNIST Letters usando la librería TensorFlow 
+    # Cargar conjunto de datos EMNIST Letters usando la librería TensorFlow
     # Datasets y separarlos en datos de entrenamiento y datos de prueba.
     dataset, metadata = tfds.load(
         'emnist/balanced',
@@ -122,7 +122,7 @@ def preparar_datos() -> Tuple[tf.data.Dataset, tf.data.Dataset]:
     )
     # Agrupar los datos de entrenamiento en lotes
     datos_entrenamiento = datos_entrenamiento.batch(TAMANO_LOTE)
-    # Hacer que el conjunto de datos de entrenamiento "pre-cargue" cuantos 
+    # Hacer que el conjunto de datos de entrenamiento "pre-cargue" cuantos
     # elementos pueda mientras se procesa el elemento actual
     datos_entrenamiento = datos_entrenamiento.prefetch(tf.data.AUTOTUNE)
 
@@ -143,10 +143,10 @@ def preparar_datos() -> Tuple[tf.data.Dataset, tf.data.Dataset]:
     # Agrupar los datos de prueba en lotes
     datos_prueba = datos_prueba.batch(TAMANO_LOTE)
     # Guardar los datos de prueba en caché para mejorar el rendimiento
-    # Nótese que para los datos de prueba se guarda en caché después de agrupar 
+    # Nótese que para los datos de prueba se guarda en caché después de agrupar
     # en lotes porque en las pruebas los lotes pueden ser iguales en cada época
     datos_prueba = datos_prueba.cache()
-    # Hacer que el conjunto de datos de prueba "pre-cargue" cuantos elementos 
+    # Hacer que el conjunto de datos de prueba "pre-cargue" cuantos elementos
     # pueda mientras se procesa el elemento actual
     datos_prueba = datos_prueba.prefetch(tf.data.AUTOTUNE)
 
@@ -155,9 +155,9 @@ def preparar_datos() -> Tuple[tf.data.Dataset, tf.data.Dataset]:
 
 def construir_modelo() -> tf.keras.Sequential:
     """Crea y compila un modelo secuencial de red neuronal convolucional.
-    
+
     Retorna:
-        El modelo de red neuronal convolucional que se utilizará para 
+        El modelo de red neuronal convolucional que se utilizará para
         identificar vocales manuscritas.
     """
     modelo = tf.keras.Sequential([
@@ -187,11 +187,11 @@ def construir_modelo() -> tf.keras.Sequential:
         tf.keras.layers.MaxPooling2D(2, 2),
 
         # Capa de abandono aleatorio con tasa de 50%:
-        # Hace que un 50% de las neuronas, seleccionadas aleatoriamente en cada 
+        # Hace que un 50% de las neuronas, seleccionadas aleatoriamente en cada
         # época, se desactiven
         tf.keras.layers.Dropout(0.5),
         # Capa de aplanamiento:
-        # Toma las salidas de las capas anteriores y las aplana en una sola 
+        # Toma las salidas de las capas anteriores y las aplana en una sola
         # capa normal
         tf.keras.layers.Flatten(),
         # Capa densa de 512 neuronas con función de activación ReLU
@@ -205,18 +205,18 @@ def construir_modelo() -> tf.keras.Sequential:
     # Compilar el modelo
     modelo.compile(
         # Optimizador: Algoritmo Adam con tasa de aprendizaje de 0.001
-        # El algoritmo de optimización Adam es un tipo particular de método 
-        # estocástico de descenso de gradiente. Ajusta los parámetros de las 
+        # El algoritmo de optimización Adam es un tipo particular de método
+        # estocástico de descenso de gradiente. Ajusta los parámetros de las
         # neuronas conforme aprende la red.
         optimizer=tf.keras.optimizers.Adam(0.001),
         # Función de pérdida: Entropía cruzada categórica dispersa
-        # Es una función particular de pérdida, es decir que su propósito es 
-        # calcular el error de categorización durante cada iteración del 
+        # Es una función particular de pérdida, es decir que su propósito es
+        # calcular el error de categorización durante cada iteración del
         # entrenamiento. La red tratará de minimizar la pérdida.
         loss=tf.keras.losses.SparseCategoricalCrossentropy(),
         # Métrica: Precisión categórica dispersa
-        # Calcula la frecuencia con la que las predicciones de la red son 
-        # correctas, es decir, qué tan frecuentemente identifica la categoría 
+        # Calcula la frecuencia con la que las predicciones de la red son
+        # correctas, es decir, qué tan frecuentemente identifica la categoría
         # correcta para cada imagen.
         metrics=[tf.keras.metrics.SparseCategoricalAccuracy()],
     )
@@ -230,7 +230,7 @@ def entrenar_modelo(
     datos_prueba: tf.data.Dataset,
 ) -> tf.keras.callbacks.History:
     """Entrena el modelo con los datos dados y evalúa su rendimiento.
-    
+
     Args:
         modelo: El modelo de red neuronal a utilizar.
         datos_entrenamiento: Los datos de entrenamiento agrupados en lotes.
