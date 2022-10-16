@@ -13,8 +13,7 @@ https://colab.research.google.com/drive/1Q-SOFa3TAJ5ibwl3jAani7K0gMlZ_j-g?usp=sh
 
 from typing import Any, Dict, Tuple
 
-import math
-import numpy
+import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
 import tensorflowjs as tfjs
@@ -37,8 +36,10 @@ ETIQUETAS_VOCALES = [
 TAMANO_LOTE = 128
 
 
-def normalizar_imagen(imagen: tf.Tensor, etiqueta: tf.Tensor) -> Tuple[tf.Tensor, tf.Tensor]:
-  """Normaliza las imágenes convirtiendo enteros (0 a 255) a decimales (0 a 1)"""
+def normalizar_imagen(
+    imagen: tf.Tensor, etiqueta: tf.Tensor
+) -> Tuple[tf.Tensor, tf.Tensor]:
+  """Normaliza las imágenes convirtiendo enteros (0-255) a decimales (0-1)"""
   return tf.cast(imagen, tf.float32) / 255., etiqueta
 
 
@@ -47,22 +48,24 @@ def es_vocal(imagen: tf.Tensor, etiqueta: tf.Tensor) -> bool:
     # Retorna verdadero si el número de etiqueta es igual a alguno de los 
     # números de etiqueta correspondientes a vocales mayúsculas o minúsculas
     return tf.math.reduce_any(
-        tf.math.equal(etiqueta, tf.constant(ETIQUETAS_VOCALES, dtype=numpy.int64))
+        tf.math.equal(etiqueta, tf.constant(ETIQUETAS_VOCALES, dtype=np.int64))
     )
 
 
-def reenumerar_etiqueta_vocal(imagen: tf.Tensor, etiqueta: tf.Tensor) -> Tuple[tf.Tensor, tf.Tensor]:
+def reenumerar_etiqueta_vocal(
+    imagen: tf.Tensor, etiqueta: tf.Tensor
+) -> Tuple[tf.Tensor, tf.Tensor]:
     """Reenumera la etiqueta a un valor de 0 a 4."""
     # Índice del número de etiqueta de vocal que corresponde a la etiqueta dada
     etiqueta_vocal = tf.math.argmax(
-        tf.math.equal(etiqueta, tf.constant(ETIQUETAS_VOCALES, dtype=numpy.int64)),
-        output_type=numpy.int32
+        tf.math.equal(etiqueta, tf.constant(ETIQUETAS_VOCALES, dtype=np.int64)),
+        output_type=np.int32
     )
-    # Asociar a cada índice 0-6 (A, E, I, O, U, a, e) una función que retorne su
-    # etiqueta deseada 0-4 (A, E, I, O, U)
+    # Asociar a cada índice 0-6 (A, E, I, O, U, a, e) una función que retorne 
+    # su etiqueta deseada 0-4 (A, E, I, O, U)
     branch_fns = (
-        [lambda: tf.constant(i, dtype=numpy.int64) for i in range(0, 5)]
-        + [lambda: tf.constant(i, dtype=numpy.int64) for i in range(0, 2)]
+        [lambda: tf.constant(i, dtype=np.int64) for i in range(0, 5)]
+        + [lambda: tf.constant(i, dtype=np.int64) for i in range(0, 2)]
     )
     # Retorna el número de etiqueta deseado según el índice de la etiqueta vocal
     return imagen, tf.switch_case(etiqueta_vocal, branch_fns=branch_fns)
@@ -142,7 +145,7 @@ def construir_modelo() -> tf.keras.Sequential:
         # - 32 filtros de salida de la convolución
         # - Núcleo de dimensiones 3x3
         # - Función de activación ReLU (x si x >= 0, 0 si x < 0)
-        # - La forma de los datos de entrada es un arreglo tridimensional 28x28x1
+        # - Forma de los datos de entrada: Arreglo tridimensional 28x28x1
         tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(28, 28, 1)),
         # Capa de agrupación cuyas dimensiones de salida son 2x2
         tf.keras.layers.MaxPooling2D(2, 2),
@@ -164,11 +167,12 @@ def construir_modelo() -> tf.keras.Sequential:
         tf.keras.layers.MaxPooling2D(2, 2),
 
         # Capa de abandono aleatorio con tasa de 50%:
-        # Hace que un 50% de las neuronas, seleccionadas aleatoriamente en cada época,
-        # se desactiven
+        # Hace que un 50% de las neuronas, seleccionadas aleatoriamente en cada 
+        # época, se desactiven
         tf.keras.layers.Dropout(0.5),
         # Capa de aplanamiento:
-        # Toma las salidas de las capas anteriores y las aplana en una sola capa normal
+        # Toma las salidas de las capas anteriores y las aplana en una sola 
+        # capa normal
         tf.keras.layers.Flatten(),
         # Capa densa de 512 neuronas con función de activación ReLU
         tf.keras.layers.Dense(512, activation='relu'),
@@ -181,19 +185,19 @@ def construir_modelo() -> tf.keras.Sequential:
     # Compilar el modelo
     modelo.compile(
         # Optimizador: Algoritmo Adam con tasa de aprendizaje de 0.001
-        # El algoritmo de optimización Adam es un tipo particular de método estocástico 
-        # de descenso de gradiente. Ajusta los parámetros de las neuronas conforme 
-        # aprende la red.
+        # El algoritmo de optimización Adam es un tipo particular de método 
+        # estocástico de descenso de gradiente. Ajusta los parámetros de las 
+        # neuronas conforme aprende la red.
         optimizer=tf.keras.optimizers.Adam(0.001),
         # Función de pérdida: Entropía cruzada categórica dispersa
-        # Es una función particular de pérdida, es decir que su propósito es calcular 
-        # el error de categorización durante cada iteración del entrenamiento. La red 
-        # tratará de minimizar la pérdida.
+        # Es una función particular de pérdida, es decir que su propósito es 
+        # calcular el error de categorización durante cada iteración del 
+        # entrenamiento. La red tratará de minimizar la pérdida.
         loss=tf.keras.losses.SparseCategoricalCrossentropy(),
         # Métrica: Precisión categórica dispersa
-        # Calcula la frecuencia con la que las predicciones de la red son correctas, 
-        # es decir, qué tan frecuentemente identifica la categoría correcta para cada
-        # imagen.
+        # Calcula la frecuencia con la que las predicciones de la red son 
+        # correctas, es decir, qué tan frecuentemente identifica la categoría 
+        # correcta para cada imagen.
         metrics=[tf.keras.metrics.SparseCategoricalAccuracy()],
     )
 
