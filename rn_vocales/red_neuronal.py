@@ -14,6 +14,7 @@ https://colab.research.google.com/drive/1Q-SOFa3TAJ5ibwl3jAani7K0gMlZ_j-g?usp=sh
 from typing import Any, Dict, Tuple
 
 import numpy as np
+import matplotlib.pyplot as plt
 import tensorflow as tf
 import tensorflow_datasets as tfds
 import tensorflowjs as tfjs
@@ -259,3 +260,66 @@ def preparar_modelo() -> Dict[str, Any]:
 def exportar_modelo_tfjs(modelo: tf.keras.Model, directorio: str):
     """Exporta el modelo dado como archivo para ser usado por TensorFlow.js."""
     tfjs.converters.save_keras_model(modelo, directorio)
+
+
+def graficar_predicciones(
+    modelo: tf.keras.Model, ds: tf.data.Dataset, filas: int, cols: int
+):
+    """Graficar predicciones del modelo para los datos dados."""
+    num = filas * cols
+
+    for imagenes, etiquetas in ds:
+        imagenes = imagenes.numpy()
+        etiquetas = etiquetas.numpy()
+        predicciones = modelo.predict(imagenes)
+
+        plt.figure(figsize=(2 * 2 * cols, 2 * filas))
+        for i in range(num):
+            plt.subplot(filas, 2 * cols, 2 * i + 1)
+            graficar_imagen(i, predicciones, etiquetas, imagenes)
+            plt.subplot(filas, 2 * cols, 2 * i + 2)
+            graficar_valores(i, predicciones, etiquetas)
+
+    plt.show()
+
+
+def graficar_imagen(
+    i: int,
+    predicciones: np.ndarray,
+    etiquetas_correctas: np.ndarray,
+    imagenes: np.ndarray,
+):
+    """Graficar imagen de la predicción de índice `i`."""
+    prediccion = predicciones[i]
+    etiqueta_correcta = etiquetas_correctas[i]
+    imagen = imagenes[i]
+
+    plt.grid(False)
+    plt.xticks([])
+    plt.yticks([])
+
+    plt.imshow(imagen[...,0], cmap=plt.cm.binary)
+
+    etiqueta = np.argmax(prediccion)
+    color = "blue" if etiqueta == etiqueta_correcta else "red"
+
+    plt.xlabel(f"Predicción: {VOCALES[etiqueta]}", color=color)
+
+
+def graficar_valores(
+    i: int, predicciones: np.ndarray, etiquetas_correctas: np.ndarray
+):
+    """Graficar valores de predicción de índice `i`."""
+    prediccion, etiqueta_correcta = predicciones[i], etiquetas_correctas[i]
+
+    plt.grid(False)
+    plt.xticks([])
+    plt.yticks([])
+
+    barras = plt.bar(range(len(VOCALES)), prediccion, color="#888888")
+
+    plt.ylim([0,1])
+    etiqueta = np.argmax(prediccion)
+
+    barras[etiqueta].set_color('red')
+    barras[etiqueta_correcta].set_color('blue')
