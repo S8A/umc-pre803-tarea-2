@@ -73,7 +73,7 @@
     </div>
   </main>
   <footer class="my-4 text-muted text-center small">
-    <p>UMC PRE803 · Creado por Jesús Pacheco, Miguelángel Chávez, Samuel Ochoa, y Wuilker Álvarez</p>
+    <p>2022 · UMC PRE803 · Creado por Jesús Pacheco, Miguelángel Chávez, Samuel Ochoa, y Wuilker Álvarez</p>
   </footer>
   <script>
     const VOCALES = ["A", "E", "I", "O", "U"];
@@ -97,16 +97,18 @@
         }
       );
       if (canvasDibujo.freeDrawingBrush) {
-        canvasDibujo.freeDrawingBrush.color = "#0000000";
+        canvasDibujo.freeDrawingBrush.color = "#000000";
         canvasDibujo.freeDrawingBrush.width = 10;
       }
 
       // Habilitar botón de limpiar
       btnLimpiar.disabled = false;
 
-      // Hacer que botón de limpiar limpie el canvas de dibujo al hacerle click
+      // Hacer que botón de Limpiar limpie el canvas de dibujo y los resultados
       btnLimpiar.addEventListener("click", function () {
         canvasDibujo.clear()
+        spanVocal.textContent = "";
+        spanConfianza.textContent = "";
       });
 
       cargarModelo().then((modelo) => {
@@ -116,7 +118,7 @@
         // Habilitar botón de predecir
         btnPredecir.disabled = false;
 
-        // Hacer que el botón de predecir realice la predicción usando 
+        // Hacer que el botón de Predecir realice la predicción usando 
         // TensorFlow y muestre los resultados
         btnPredecir.addEventListener("click", function () {
           // Deshabilitar botón temporalmente
@@ -132,7 +134,7 @@
           var arr28 = [];
           for (var p = 0, i=0; p < imgData.data.length; p += 4) {
             // Tomar valor de alpha de cada píxel, normalizarlo de 0-255 a 0-1,
-            // y agregarloa al arreglo arr28
+            // y agregarlo al arreglo arr28 como un arreglo de 1 ítem
             var valor = imgData.data[p+3] / 255;
             arr28.push([valor]);
             // Una vez que arr28 tenga 28 píxeles, agregarlo al arreglo arr,
@@ -142,7 +144,7 @@
               arr28 = [];
             }
           }
-          // Poner el arreglo dentro de un arreglo para que tenga las 
+          // Poner el arreglo arr dentro de un arreglo para que tenga las 
           // dimensiones esperadas por TensorFlow (1, 28, 28, 1)
           arr = [arr];
           // Tensor de 4 dimensiones
@@ -150,7 +152,9 @@
 
           // Realizar predicción
           var resultados = modelo.predict(tensor4).dataSync();
-          var mayorIndice = resultados.indexOf(Math.max.apply(null, resultados));
+          var mayorIndice = resultados.indexOf(
+            Math.max.apply(null, resultados)
+          );
           // Vocal identificada
           var vocal = VOCALES[mayorIndice];
           spanVocal.textContent = vocal;
